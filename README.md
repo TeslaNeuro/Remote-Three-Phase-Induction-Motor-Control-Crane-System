@@ -17,6 +17,7 @@ This repository contains Rev A of a remote control system for a three-phase indu
 
 ## Software
 - Arduino IDE for firmware development
+- Proteus Professional for simulating the circuit and code using VSIM
 - C++ code to generate PWM signals on the Nano and display metrics on the Uno
 
 ## Getting Started
