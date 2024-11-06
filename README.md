@@ -7,11 +7,13 @@ This repository contains Rev A of a remote control system for a three-phase indu
 - Basic Remote Operation: Start/stop and speed adjustments controlled through a simple interface.
 
 ## Hardware Requirements
-Three-phase induction motor
-MOSFET drivers and inverter MOSFETs for three-phase signal generation
-Arduino Nano (for motor control)
-Arduino Uno (for display)
-LCD display for real-time monitoring
+- Three-phase induction motor
+- MOSFET drivers and inverter MOSFETs for three-phase signal generation
+- Arduino Nano (for motor control)
+- Arduino Uno (for display)
+- LCD display for real-time monitoring
+- Passive electronic elements (Resistors, Capacitors and Inductors)
+- Optional: 12VDC power or grid supply
 
 ## Software
 - Arduino IDE for firmware development
