@@ -18,9 +18,9 @@ LCD display for real-time monitoring
 - C++ code to generate PWM signals on the Nano and display metrics on the Uno
 
 ## Getting Started
-Clone this repository and upload the firmware to the Arduino Nano and Arduino Uno.
-Set up the MOSFET drivers and connect the motor, display, and control circuits.
-Power the system and use the interface for basic motor control and monitoring.
+1. Clone this repository and upload the firmware to the Arduino Nano and Arduino Uno.
+2. Set up the MOSFET drivers and connect the motor, display, and control circuits.
+3. Power the system and use the interface for basic motor control and monitoring.
 
 ## Future Development (Rev B)
 Network capability for remote monitoring and control
