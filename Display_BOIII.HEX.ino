@@ -1,5 +1,5 @@
 // Display for Crane System
-// Author: Arshia Keshvari Asl & Daniil Ivanov
+// Author: Arshia Keshvari & Daniil Ivanov
 // POWER ENGINEERING
 
 # include "DHT.h"                   // Digital Humidity and Temperature sensor library
