@@ -1,6 +1,9 @@
 # Remote-Three-Phase-Inductor-Motor-Control
 This repository contains Rev A of a remote control system for a three-phase induction motor, utilizing an Arduino Nano for motor control and an Arduino Uno for display. The system uses PWM signals to drive MOSFET drivers, generating the necessary three-phase signals to control the motor. This project is meant to simulate a simple 3-phase motor open loop control system for an industrial application.
 
+![image](https://github.com/user-attachments/assets/d5c52782-f168-446b-92df-fd759332b3c0)
+
+
 ## Features
 - PWM Control: Generates three-phase signals by driving MOSFETs with PWM outputs from the Arduino Nano.
 - Parameter Display: Real-time motor parameters, such as speed and current, are shown on an LCD connected to the Arduino Uno.
