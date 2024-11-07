@@ -1,8 +1,6 @@
 // Display for Crane System
 // Author: Arshia Keshvari Asl & Daniil Ivanov
-// Group N
-// POWER ENGINEERING LAB
-// MODIFIED DATE : 08/04/2022
+// POWER ENGINEERING
 
 # include "DHT.h"                   // Digital Humidity and Temperature sensor library
 # include <LiquidCrystal_I2C.h>     // Liquid Crystal Display I2C Library
