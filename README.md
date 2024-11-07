@@ -35,5 +35,5 @@ This repository contains Rev A of a remote control system for a three-phase indu
 - Improved fault detection and protection features
 - Potential integration of PID control for more refined motor speed handling
 
-![image](https://github.com/user-attachments/assets/2b13f1e8-8d4e-4567-9549-e1301dcd83d4)
+      ![image](https://github.com/user-attachments/assets/2b13f1e8-8d4e-4567-9549-e1301dcd83d4)
 
