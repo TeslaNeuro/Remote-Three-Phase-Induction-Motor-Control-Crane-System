@@ -1,5 +1,5 @@
 // Three - Phase - Motor - Control
-// Author: Arshia Keshvari Asl
+// Author: Arshia Keshvari
 // POWER ENGINEERING
 
 // Duty cycle = (TON/(TON + TOFF)) *100
