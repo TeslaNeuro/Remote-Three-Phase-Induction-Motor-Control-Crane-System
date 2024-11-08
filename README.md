@@ -29,7 +29,7 @@ This repository contains Rev A of a remote control system for a three-phase indu
 3. Power the system and use the interface for basic motor control and monitoring.
 
 ## Future Development (Rev B)
-- ESP32 as main controller for dispaly and motor control
+- ESP32 as main controller for display and motor control
 - Network capability for remote monitoring and control
 - Closed-loop feedback control using hall effect sensors, encoders and etc
 - Improved fault detection and protection features
