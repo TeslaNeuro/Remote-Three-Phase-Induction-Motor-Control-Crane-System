@@ -1,6 +1,8 @@
 // Three - Phase - Motor - Control
 // Author: Arshia Keshvari
-// POWER ENGINEERING
+// Group N
+// POWER ENGINEERING LAB
+// DATE : 22/02/2022
 
 // Duty cycle = (TON/(TON + TOFF)) *100
 
@@ -19,6 +21,28 @@ int potentiometer = 15;               // 10k ohm variable resistor manually cont
 float input_frequency = 0;            // input frequency determined by potentiometer value
 float t = 0;                          // Time delay
 int potValue;                         // int variable to later on store the value fo the pot
+unsigned long previousMillis = 0;   
+unsigned long brakeMillis = 0;     
+
+byte stepIndex = 0;                 // Current commutation step (0-5)
+bool clockwise = true;              // Motor direction
+
+// Braking variables
+unsigned long brakeStartTime = 0;
+bool brakingActive = false;
+const unsigned long brakeDuration = 3000; // Braking time in milliseconds (3 seconds)
+float initialDelay = 0; // Stores delay when braking starts
+
+// Commutation sequence
+const byte phaseSequence[6][3] = {
+  {HIGH, LOW, LOW},
+  {HIGH, HIGH, LOW},
+  {LOW, HIGH, LOW},
+  {LOW, HIGH, HIGH},
+  {LOW, LOW, HIGH},
+  {HIGH, LOW, HIGH}
+};
+
 
 // Runs at the start of the program
 void setup () {
@@ -31,7 +55,8 @@ void setup () {
    pinMode(OffSw,INPUT);              // On/Off Control Input using a switch
    pinMode(DirectionSw,INPUT);        // Direction Switch Input using a switch.
    pinMode(manualbrake,INPUT);        // Manual brake button
-   
+
+  ShutDown_All_Signals();
 }
 
 
@@ -86,52 +111,77 @@ void Direction_Proccess(){
     Turn_On_Signals_anti_clockwise();
     }
     
-  }
-
+}
 
 void loop() {
+  // Read potentiometer and calculate frequency using logarithmic scaling
+  potValue = analogRead(potentiometer);
+  float minFreq = 1;   // Prevent zero
+  float maxFreq = 50;  // Max frequency
+  float scale = log10(maxFreq / minFreq);
+  input_frequency = minFreq * pow(10, scale * potValue / 1023.0);
+  t = 1000 / (input_frequency * 6);
 
-   potValue = analogRead(potentiometer);
-   input_frequency = map(potValue, 0, 1023, 0, 50);
-   t = 1000/(input_frequency*6);
+  // Read direction switch
+  clockwise = !digitalRead(DirectionSw);
 
-//   In case speed control dosent work uncomment this to perform debugging
-//   lcd.setCursor(0,0);
-//   lcd.print(input_frequency);
-//   lcd.setCursor(0,1);
-//   lcd.print(t);
-//   lcd.setCursor(0,2);
-//   lcd.print(potValue);
-//   delayMicroseconds(1);
 
-// Implement the on functionality code
-  if (digitalRead(OffSw) == LOW){
+  if (digitalRead(OffSw) == LOW && !digitalRead(manualbrake)) {
     digitalWrite(OnOffCtrl, LOW);
-    Direction_Proccess();
-    }
-    
-  else if (digitalRead(OffSw) == HIGH){
+    brakingActive = false; // Cancel braking if motor is running again
+    updateMotor();
+  } else if (digitalRead(manualbrake)) {
+    gradualBrake();
+  } else {
     digitalWrite(OnOffCtrl, HIGH);
     ShutDown_All_Signals();
-    }
-  brake();
+    brakingActive = false; // Reset braking state
+  }
+
 }
 
+// Non-blocking motor step update
+void updateMotor() {
+  unsigned long currentMillis = millis();
 
-// Brake function
-void brake(){
+  if (currentMillis - previousMillis >= t) {
+    previousMillis = currentMillis;
 
-  while(digitalRead(manualbrake)){
-    
-    digitalWrite(OnOffCtrl,HIGH);  // Shutdown logic state
-    ShutDown_All_Signals();
-
+    if (clockwise) {
+        stepIndex = (stepIndex + 1) % 6;
+    } else {
+        stepIndex = (stepIndex == 0) ? 5 : stepIndex - 1;
     }
-    
-  while(digitalRead(OffSw)){
-    
-    digitalWrite(OnOffCtrl,HIGH);
-    ShutDown_All_Signals();
-   
-   } 
+
+    digitalWrite(A, phaseSequence[stepIndex][0]);
+    digitalWrite(B, phaseSequence[stepIndex][1]);
+    digitalWrite(C, phaseSequence[stepIndex][2]);
+  }
 }
+
+void gradualBrake() {
+  unsigned long currentMillis = millis();
+
+  if (!brakingActive) {
+    // Initialize braking
+    brakingActive = true;
+    brakeStartTime = currentMillis;
+    initialDelay = t; // Store the current delay
+  }
+
+  // Calculate elapsed braking time
+  unsigned long elapsed = currentMillis - brakeStartTime;
+
+  if (elapsed <= brakeDuration) {
+    // Linearly increase delay to reduce speed
+    float progress = (float)elapsed / brakeDuration; // 0.0 to 1.0
+    t = initialDelay + progress * (1000 - initialDelay); // Gradually increase t to a max value
+    updateMotor();
+  } else {
+    // Braking complete, shut down the motor
+    digitalWrite(OnOffCtrl, HIGH);
+    ShutDown_All_Signals();
+    brakingActive = false; // Reset for future braking
+  }
+}
+
