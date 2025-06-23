@@ -1,8 +1,6 @@
 // Three - Phase - Motor - Control
 // Author: Arshia Keshvari
-// Group N
-// POWER ENGINEERING LAB
-// DATE : 22/02/2022
+// POWER ENGINEERING
 
 // Duty cycle = (TON/(TON + TOFF)) *100
 
