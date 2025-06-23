@@ -16,9 +16,11 @@ byte DirectionSw = 5;                  // Clockwise or anti-clockwise switch LOW
 byte manualbrake = 7;                  // Slowly slows down the motor until it reaches zero
 int potentiometer = A0;                // 10k ohm variable resistor manually controlled by user
 int load = A1;                         // load push button or platform
+int stress = A2;                       // Stress push button or crane stress
 const byte interpin = 2;               // Interrupt pin for anemometer                  
 int ECHO = 10;                         // ECHO Pin of the ultrasonic sensor
 int TRIG = 9;                          // Trigger pin of the ultrasonic sensor
+const int dustpin = 8;                      // Data from dust sensor
 
 // Declaring Values/Paramaeteres to be calculated
 String Direction;                      // For storing direction status
@@ -26,15 +28,16 @@ float input_frequency = 0;             // Input frequency determined by potentio
 float t = 0;                           // Time delay (This controls pwm of motor)
 float frequency = 0;                   // Frequency of the motor used in LCD display
 float Speed = 0;                       // Speed of the motor
-long pi = 3.141592653589;              // Pi value used for formulas
-long angular_acc;                      // Angular Acceleration
-long angular_velocity;                 // Angular Velocity
+unsigned long pi = 3.141592653589;              // Pi value used for formulas
+unsigned long angular_acc;                      // Angular Acceleration
+unsigned long angular_velocity;                 // Angular Velocity
 int RPM = 0;                           // Revolutions per minute
 double moment_of_inertia = 0.67;       // Moment of inertia
 float Torque;                          // Torque
 float Power_Consumption;               // Power consumption of the motor
 int potValue;                          // Used to store the value of the pot
 int Mass;                              // Weight of the load
+int Stress;
 float distance;                        // Distance of the object
 
 // LED Indicator thresholds
@@ -52,7 +55,6 @@ float aSetting=60.0;                      // Anemometer setting set to 60
 float aWSpeed;                            // Anemometer speed as a floating number    
 
 // Dust sensor PPD42
-int dustpin = 8;                      // Data from dust sensor
 unsigned long duration;               // Duration of pulses   
 unsigned long sampletime_ms = 30000;  // Set sample time in milliseconds. Leave at 30,000 (30sec) for accuracy
 unsigned long lowpulseoccupancy = 0;  // Low pulse occupancy
@@ -73,71 +75,74 @@ bool print_d2 = false;
 // Runs at the start of the program
 void setup () {
    
-   Serial.begin(9600);              // Set baud rate to 115200 can be 9600
+   Serial.begin(9600);                // Set baud rate to 115200 can be 9600
    pinMode(potentiometer,INPUT);      // Potentiometer input
    pinMode(OffSw,INPUT);              // On/Off Control Input using a switch
    pinMode(DirectionSw,INPUT);        // Direction Switch Input using a switch.
    pinMode(manualbrake,INPUT);        // Manual brake button
+   pinMode(load,INPUT);               // load push button
+   pinMode(stress,INPUT);             // stress push button
    pinMode(interpin,INPUT_PULLUP);    // Anemometer wind pinout
    pinMode(dustpin,INPUT);            // Dust sensor pinout
    pinMode(TRIG,OUTPUT);              // Trigger output
    pinMode(ECHO,INPUT);               // ECHO input
-   pinMode(11, OUTPUT);               // red led
-   pinMode(12, OUTPUT);               // green led
-   pinMode(13, OUTPUT);               // blue led
+   pinMode(11,OUTPUT);                // red led
+   pinMode(12,OUTPUT);                // green led
+   pinMode(13,OUTPUT);                // blue led
 
    dht.begin();                       // Activates dht sensor
 
-   lcd.init();                        // initialize lcd
-   lcd.backlight();                   // Turns on the lcd
-   lcd.begin(16,4);
-   lcd.setCursor(3,0);
-   lcd.print(F("Hi Dr. Nankoo"));
-   lcd.setCursor(3,1);
-   lcd.print(F("Motor Control"));
-   lcd.setCursor(3,2);
-   lcd.print(F("Running..."));
-   
-   lcd2.init();
-   lcd2.backlight();
-   lcd2.begin(16,4);
-   lcd2.setCursor(3,0);
-   lcd2.print(F("Crane System!"));
-   lcd2.setCursor(3,1);
-   lcd2.print(F("Sensors activated"));
-   lcd2.setCursor(3,2);
-   lcd2.print(F("Please Wait 5 Seconds"));
-
-   lcd3.init();
-   lcd3.backlight();
-   lcd3.begin(16,4);
-   delay(500); // Wait for a while
-   
-   lcd.clear(); lcd2.clear(); lcd3.clear();
+   initializeLCDs();
    
    attachInterrupt(interpin,anemometerISR, RISING);
    prevTime = millis();
    dataTimer = millis();        
 }
 
+// ---------- Initialization ----------
+void initializeLCDs() {
+  lcd.init();
+  lcd.backlight();
+  lcd.setCursor(3, 0);
+  lcd.print(F("Hi Dr. Nankoo"));
+  lcd.setCursor(3, 1);
+  lcd.print(F("Motor Control"));
+  lcd.setCursor(3, 2);
+  lcd.print(F("Running..."));
+
+  lcd2.init();
+  lcd2.backlight();
+  lcd2.setCursor(3, 0);
+  lcd2.print(F("Crane System!"));
+  lcd2.setCursor(3, 1);
+  lcd2.print(F("Sensors Activated"));
+
+  lcd3.init();
+  lcd3.backlight();
+
+  delay(500);
+  lcd.clear();
+  lcd2.clear();
+  lcd3.clear();
+}
 
 void Sensor_Display(){
 
   lcd2.setCursor(0,0);
   int RhA = dht.readHumidity();
-  lcd2.print("Humidity: "); lcd2.print(RhA); lcd2.print(" %");
+  lcd2.print(F("Humidity: ")); lcd2.print(RhA); lcd2.print(F(" %"));
   
   lcd2.setCursor(0,1);
   int TempC = dht.readTemperature();
-  lcd2.print("Temperature: "); lcd2.print(TempC); lcd2.print("\xDF" "C");
+  lcd2.print(F("Temperature: ")); lcd2.print(TempC); lcd2.print(F("\xDF" "C"));
 
   // Dust sensor
   lcd2.setCursor(0,2);
-  lcd2.print("Dust: ");
+  lcd2.print(F("Dust: "));
   lcd2.setCursor(6,2); 
   lcd2.print(ratio); 
   lcd2.setCursor(7,2);
-  lcd2.print("/");
+  lcd2.print(F("/"));
   lcd2.setCursor(9,2);
   lcd2.print(concentration);
   
@@ -150,7 +155,7 @@ void Sensor_Display(){
   float aFreq=0;
   
   lcd2.setCursor(0,3);
-  lcd2.print("Wind: "); lcd2.print(aWSpeed); lcd2.print(" Km/h");
+  lcd2.print(F("Wind: ")); lcd2.print(aWSpeed); lcd2.print(F(" Km/h"));
   
   startt=true;                                        
   attachInterrupt(digitalPinToInterrupt(interpin),anemometerISR,RISING);
@@ -169,7 +174,7 @@ void Display_1(){
   lcd.print("Direction: "); lcd.print(Direction);
 
   lcd.setCursor(0,3);
-  lcd.print("Load Weight: "); lcd.print(Mass); lcd.print(" kg");
+  lcd.print("Stress: "); lcd.print(Stress); lcd.print(" N/mm^2");
   }
 
 void Display_2(){
@@ -193,7 +198,11 @@ void loop() {
   // Load weighting
   int force = analogRead(load);
   Mass = map(force, 0, 205, 0, 5000);  // For simulation purposes max is set to 5 tons
-
+  
+  // Crane Stress
+  int tension = analogRead(stress);
+  Stress = map(tension, 0, 205, 0, 300);   // For simulation purposes highest stress is set to 300 N/mm^2
+  
   // Dust sensor
   duration = pulseIn(dustpin, LOW); //Checks photovoltaic duration
   lowpulseoccupancy = lowpulseoccupancy + duration; //adds duration to our measure
@@ -294,6 +303,18 @@ void SOS(){
   digitalWrite(13, LOW);
   }
 
+  // Maximum rated stress is set to 200 N/mm^2
+  if (Stress >= 200){
+    lcd3.setCursor(0,0);
+    lcd3.print("SOS Alert!!!");
+    lcd3.setCursor(0,1);
+    lcd3.print("Crane lift deformed");
+    lcd3.setCursor(0,2);
+    lcd3.print("Turn off crane");
+    lcd3.setCursor(0,3);
+    lcd3.print("Contact HQ");
+  }
+  
   // Sends an SOS if distance of an object is less than 20cm
   if (distance <= 20){
    lcd3.setCursor(0,1);
@@ -316,7 +337,7 @@ void SOS(){
     digitalWrite(13,HIGH);
   }
   
-  else if (aWSpeed < 38 && distance > 20){
+  else if (aWSpeed < 38 && distance > 20 && Stress < 200){
     lcd3.clear();
   }
   
